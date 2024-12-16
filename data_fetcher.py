@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO,
                         logging.StreamHandler()
                     ])
 
-def make_request(api_key, info):
+def make_request_series(api_key, info):
     """
     Takes in API, information and constructes the API request and sends it.
 
@@ -43,7 +43,37 @@ def make_request(api_key, info):
     
     return data
 
-def create_info(symbol, interval, output_size=None):
+def make_request_rates(api_key, info):
+    """
+    Takes in API, information and constructes the API request and sends it 
+    
+    Makes Request similar to this:
+    https://api.twelvedata.com/exchange_rate?symbol=USD/JPY&apikey=your_api_key
+    """
+
+    request_link= f'https://api.twelvedata.com/exchange_rate?{info}&apikey={api_key}'
+
+    try:
+        time.sleep(0.5)
+
+        req = requests.get(request_link)
+
+        req.raise_for_status()
+
+        data = req.json()
+
+    except requests.exceptions.HTTPError as http_err:
+        logging.error(f'HTTP error occurred: {http_err}')
+        return None
+    except Exception as err:
+        logging.error(f'Other error occurred: {err}')
+        raise err
+    
+    return data
+
+
+
+def create_info_series(symbol, interval, output_size=None):
     """
     Takes in a list of symbols, intervals and conditionally output_size.
 
@@ -55,7 +85,23 @@ def create_info(symbol, interval, output_size=None):
 
     output = f'symbol={symbol_string}&interval={interval}'
 
+    logging.info(f'created info string: {output}')
+
     return output if output_size else output + f'&outputsize={output_size}'
+
+def create_info_rates(symbol, date=None):
+    """
+    Takes in a list of symbols and creates the query of the Api request and returns similar to this:
+    symbol=USD/JPY
+    """
+
+    symbol_string = re.sub(r"[ \[\]]", '', str(symbol))
+
+    output = f'symbol={symbol_string}'
+
+    logging.info(f'created info string: {output}')
+
+    return output if date else output + f'&date={date}'
 
 def json_to_pandas(json_content):
     """
@@ -77,22 +123,5 @@ def json_to_pandas(json_content):
 
     return dataframes
 
-def run_diagnostics(dataframe):
-    """
-    Takes in singular dataframe 
-    Analyze Time Series Data:
-    TODO: Pattern recognition for Trends 
-    TODO: Optimize 
-    """
-    pass
-
-
-
-
-
-
-
-    
-    
 
 
