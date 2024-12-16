@@ -1,0 +1,16 @@
+# Log files
+app.log
+
+# Compiled files and directories
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+
+# macOS system files
+.DS_Store
+
+# Data files
+*.csv
+*.json

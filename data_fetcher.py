@@ -4,6 +4,15 @@ import pandas as pd
 import requests
 import time
 import re
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    handlers=[
+                        logging.FileHandler("app.log"),
+                        logging.StreamHandler()
+                    ])
 
 def make_request(api_key, info):
     """
@@ -25,9 +34,11 @@ def make_request(api_key, info):
         data = req.json()
 
     except requests.exceptions.HTTPError as http_err:
+        logging.error(f'HTTP error occurred: {http_err}')
         return None
     
     except Exception as err:
+        logging.error(f'Other error occurred: {err}')
         raise err
     
     return data
@@ -73,7 +84,7 @@ def run_diagnostics(dataframe):
     TODO: Pattern recognition for Trends 
     TODO: Optimize 
     """
-
+    pass
 
 
 
