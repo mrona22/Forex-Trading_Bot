@@ -1,10 +1,16 @@
-import json
+import os
 import numpy as np
 import pandas as pd
 import requests
 import time
 import re
 import logging
+from dotenv import load_dotenv
+
+load_dotenv()
+
+API_KEY = os.getenv('API_KEY')
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, 
