@@ -44,7 +44,7 @@ class WebsocketClient:
         subscribe_message = json.dumps({
             "action": "subscribe",
             "params": {
-                "symbols": self.symbol  # Ensure this is a comma-separated string
+                "symbols": self.symbol  
             }
         })
         ws.send(subscribe_message)
