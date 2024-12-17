@@ -7,6 +7,7 @@ import re
 import logging
 from dotenv import load_dotenv
 
+# Load the API key from the .env file
 load_dotenv()
 
 API_KEY = os.getenv('API_KEY')
@@ -20,7 +21,7 @@ logging.basicConfig(level=logging.INFO,
                         logging.StreamHandler()
                     ])
 
-def make_request_series(api_key, info):
+def make_request_series(info):
     """
     Takes in API, information and constructes the API request and sends it.
 
@@ -28,7 +29,7 @@ def make_request_series(api_key, info):
     https://api.twelvedata.com/time_series?symbol=AAPL,EUR/USD,ETH/BTC:Huobi,TRP:TSX&interval=1min&apikey=your_api_ke
     """
 
-    request_link= f'https://api.twelvedata.com/time_series?{info}&apikey={api_key}'
+    request_link= f'https://api.twelvedata.com/time_series?{info}&apikey={API_KEY}'
 
     try:
         time.sleep(0.5)
@@ -43,34 +44,6 @@ def make_request_series(api_key, info):
         logging.error(f'HTTP error occurred: {http_err}')
         return None
     
-    except Exception as err:
-        logging.error(f'Other error occurred: {err}')
-        raise err
-    
-    return data
-
-def make_request_rates(api_key, info):
-    """
-    Takes in API, information and constructes the API request and sends it 
-    
-    Makes Request similar to this:
-    https://api.twelvedata.com/exchange_rate?symbol=USD/JPY&apikey=your_api_key
-    """
-
-    request_link= f'https://api.twelvedata.com/exchange_rate?{info}&apikey={api_key}'
-
-    try:
-        time.sleep(0.5)
-
-        req = requests.get(request_link)
-
-        req.raise_for_status()
-
-        data = req.json()
-
-    except requests.exceptions.HTTPError as http_err:
-        logging.error(f'HTTP error occurred: {http_err}')
-        return None
     except Exception as err:
         logging.error(f'Other error occurred: {err}')
         raise err
@@ -81,19 +54,22 @@ def make_request_rates(api_key, info):
 
 def create_info_series(symbol, interval, output_size=None):
     """
-    Takes in a list of symbols, intervals and conditionally output_size.
+    Takes in a list or individual of symbols, intervals and conditionally output_size.
 
     Creates thee query of the Api request and returns similar to this:
     symbol=AAPL,EUR/USD,ETH/BTC:Huobi,TRP:TSX&interval=1min
     """
 
-    symbol_string = re.sub(r"[ \[\]]", '', str(symbol))
+    symbol_string = re.sub(r"[ \[\]\"']", '', str(symbol))
 
     output = f'symbol={symbol_string}&interval={interval}'
 
     logging.info(f'created info string: {output}')
 
-    return output if output_size else output + f'&outputsize={output_size}'
+    if output_size is not None:
+        output += f'&outputsize={output_size}'
+    
+    return output
 
 def create_info_rates(symbol, date=None):
     """
@@ -112,22 +88,55 @@ def create_info_rates(symbol, date=None):
 def json_to_pandas(json_content):
     """
     Takes in a json that was returned from the API call, converts and returns
-    to a list of Dataframes
+    to a dataframe.
     """
-    dataframes = {}
-    for symbol, content in json_content.items():
-   
-        meta = content['meta']
-        values = content['values']
-        df = pd.DataFrame(values)
-        for key, value in meta.items():
-            df[key] = value
+    df = pd.DataFrame(json_content['values'])
+    
+    df = transform_dataframe(df) 
 
-        dataframes[symbol] = df
+    df = (
+        df
+        .sort_values(by='datetime')
+        .set_index('datetime')
+    )
 
-    #final_df = pd.concat(dataframes, ignore_index=True)
+    logging.info('Dataframe created')
 
-    return dataframes
+    return df
+
+def transform_dataframe(df):
+    """
+    Takes in a dataframe and transforms columns to date time or float
+    In the case there is no volume, it will not be transformed.
+    """
+    try:
+        df['datetime'] = pd.to_datetime(df['datetime'])
+
+        df['open'] = df['open'].astype(float)
+
+        df['high'] = df['high'].astype(float)
+
+        df['low'] = df['low'].astype(float)
+
+        df['close'] = df['close'].astype(float)
+
+        df['volume'] = df['volume'].astype(float)
+
+    except KeyError:
+        logging.info('No volume in the dataframe')
+
+        df['datetime'] = pd.to_datetime(df['datetime'])
+
+        df['open'] = df['open'].astype(float)
+
+        df['high'] = df['high'].astype(float)
+
+        df['low'] = df['low'].astype(float)
+
+        df['close'] = df['close'].astype(float)
+    
+    return df
+
 
 
 
