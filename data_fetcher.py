@@ -137,6 +137,40 @@ def transform_dataframe(df):
     
     return df
 
+def update_central_data(info):
+    """
+    Called with an info string, created by the create_info_series function.
+    Loads in form the data.csv file, makes a request to the API and updates the dataframe.
+    saves the updated dataframe back to the data.csv file.
+    """
+
+    logging.info('Updating data.csv called')
+
+    try:
+        df = pd.read_csv('data.csv')
+
+    except FileNotFoundError:
+        logging.error('File not found')
+        df = pd.DataFrame()
+
+    if not df.empty:
+
+        df = transform_dataframe(df)
+
+        df = df.set_index('datetime')
+
+    updated_info = json_to_pandas(make_request_series(info))
+
+    combined_df = pd.concat([df, updated_info])
+
+    combined_df = combined_df[~combined_df.index.duplicated(keep='last')]
+
+    updated_info.to_csv('data.csv')
+
+    logging.info('Updated data.csv')
+
+    return combined_df
+
 
 
 

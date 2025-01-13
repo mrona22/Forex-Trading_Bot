@@ -48,4 +48,3 @@ def run_diagnostics(dataframe):
     TODO: Pattern recognition for Trends 
     TODO: Optimize 
     """
-    pass
