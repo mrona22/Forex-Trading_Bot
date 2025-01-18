@@ -96,7 +96,6 @@ def json_to_pandas(json_content):
 
     df = (
         df
-        .sort_values(by='datetime')
         .set_index('datetime')
     )
 
@@ -165,7 +164,7 @@ def update_central_data(info):
 
     combined_df = combined_df[~combined_df.index.duplicated(keep='last')]
 
-    updated_info.to_csv('data.csv')
+    combined_df.to_csv('data.csv')
 
     logging.info('Updated data.csv')
 

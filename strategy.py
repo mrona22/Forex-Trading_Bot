@@ -17,10 +17,13 @@ def feature_engineering(dataframe):
     - Commodity Channel Index (CCI)
     - 15 Day Moving Average 
     - 15 Day Rolling Standard Deviation
-    - Bollinger Bands
+    - Bollinger Bands 
+    - Voltatility
     """
 
     logging.info('Feature Engineering')
+
+    dataframe = dataframe.reset_index().sort_values('datetime').set_index('datetime')
 
     dataframe['rolling_mean'] = dataframe['close'].expanding().mean()
 
@@ -42,9 +45,34 @@ def feature_engineering(dataframe):
 
     return dataframe
 
+def label_data(dataframe, ratio_SLTP = 3):
+    """
+    Takes in dataframe returned from the feature Engeneer and the ration of (Take-Profit Order) / (Stop-Loss Order) labels data
+    - 1: Buy
+    - 0: Hold
+    - -1: Sell
+    """
+
+    logging.info('Labeling Data')
+
+    dataframe['TP'] = dataframe['close'] + (ratio_SLTP * dataframe['15_rolling_std'])
+    dataframe['SL'] = dataframe['close'] - dataframe['15_rolling_std']
+
+    reached_pos = dataframe['close'].rolling(15).max() >= dataframe['TP']
+    reached_neg = dataframe['close'].rolling(15).min() <= dataframe['SL']
+
+    # Here we have to decide later, after testing whether reaching the TP and SL is overfitting to the data
+    # Hence should I label them anything or just let them be 0
+    dataframe['label'] = reached_pos.astype(int) - reached_neg.astype(int)
+
+   
+    return dataframe.drop(columns=['TP', 'SL'])
+
 def run_diagnostics(dataframe):
     """
     Takes in singular dataframe Analyze Time Series Data:
     TODO: Pattern recognition for Trends 
     TODO: Optimize 
     """
+
+
