@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 import logging
-import sklearn as sk
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
 
 # add logging
 logging.basicConfig(level=logging.INFO)
@@ -74,5 +75,18 @@ def run_diagnostics(dataframe):
     TODO: Pattern recognition for Trends 
     TODO: Optimize 
     """
+    
+    train_X, test_X, train_y, test_y = train_test_split(dataframe.drop(columns=['label']), dataframe['label'], test_size=0.2, shuffle=False)
+
+    model = SVC()
+
+    model.fit(train_X, train_y)
+
+    if model.score(test_X, test_y) > 0.5:
+        logging.info('Model is performing well')
+        return SVC().fit(dataframe.drop(columns=['label']), dataframe['label'])
+    else:
+        logging.info('Model is not performing well')
+        return None
 
 
